@@ -51,8 +51,6 @@ import rs.ac.uns.ftn.informatika.osa.mailService.entity.Attachment;
 import rs.ac.uns.ftn.informatika.osa.mailService.service.MessageServiceInterface;
 
 
-@RestController
-@RequestMapping(value="/")
 public class Mail {
 //	public static void main(String[] args) {
 //		String host = c;
@@ -64,16 +62,14 @@ public class Mail {
 //	ArrayList<rs.ac.uns.ftn.informatika.osa.mailService.entity.Message> msd = fetch(host, mailStoreType, username, password,true);
 //	System.out.println("size: " + msd.size());
 //	}
-	@Autowired
-	private MessageServiceInterface messageService;
 	
-	private static String uri="F:\\Programming\\PMSdoPost\\ValentininaOsaSklj\\OSASklj\\OSASklj2\\MailService\\data\\";
-	@RequestMapping("/fetch")
+	private static String uri="F:\\Programming\\VOSA\\OSASklj2\\MailService\\data\\";
+	
 	public ArrayList<rs.ac.uns.ftn.informatika.osa.mailService.entity.Message>  fetch(Account account, boolean firstTime, List<rs.ac.uns.ftn.informatika.osa.mailService.entity.Message> existingMessages) {
 		
 		ArrayList<rs.ac.uns.ftn.informatika.osa.mailService.entity.Message> userMessages = new ArrayList<>();
 		ArrayList<rs.ac.uns.ftn.informatika.osa.mailService.entity.Message> returnMessages = new ArrayList<>();
-        
+
 		try {
 			Properties properties = new Properties();
 	        properties.put("mail.store.protocol", "pop3");
@@ -95,112 +91,111 @@ public class Mail {
 	        
             FetchProfile fp = new FetchProfile();
             fp.add(UIDFolder.FetchProfileItem.UID);
-            emailFolder.fetch(emailFolder.getMessages(), fp);
-
-            POP3Folder pf =(POP3Folder)emailFolder;         
 
             messages = emailFolder.getMessages();
 
-//                    String uid = pf.getUID(message);
-//                    System.out.println(uid)
+            POP3Folder pf =(POP3Folder)emailFolder;         
 	        
+            String uid="";
 	        if(messages!=null) {
-		        for(int i = 0; i < messages.length; i++) {
-		        	Message message = messages[i];
-		        	
-		        	String uid = pf.getUID(message);
-                    
-		        	rs.ac.uns.ftn.informatika.osa.mailService.entity.Message modelMessage = new rs.ac.uns.ftn.informatika.osa.mailService.entity.Message();
-		        	Address[] a;
-		        	
-//		        	modelMessage.setContent(getTextFromMessage(message));
-		        	
-		        	String contentType = message.getContentType();
-		        	String messageContent = "";
-		        	
-//		            CONTENT
-		        	
-		        	String attachFiles = "";
-		        	if(contentType.contains("multipart")) {
-		        		Multipart multiPart = (Multipart) message.getContent();
-	                    int numberOfParts = multiPart.getCount();
-	                    for (int partCount = 0; partCount < numberOfParts; partCount++) {
-	                        MimeBodyPart part = (MimeBodyPart) multiPart.getBodyPart(partCount);
-	                        if (Part.ATTACHMENT.equalsIgnoreCase(part.getDisposition())) {
-	                            // this part is attachment
-	                            String fileName = part.getFileName();
-	                            
-	                            attachFiles += fileName + ", ";
-	                            part.saveFile(uri + File.separator + fileName);
-	                            byte[] bFile = Files.readAllBytes(new File(uri + fileName).toPath());
-	                            String sFile = Base64.encodeBase64String(bFile);
-	                            Attachment att = new Attachment();
-	                            att.setId(att.hashCode());
-	                            att.setName(fileName);
-	                            att.setData(sFile);
-	                            att.setMimeType(".jpg");
-	                            ArrayList<Attachment> atts=new ArrayList<>();
-	                            atts.add(att);
-	                            modelMessage.setMessageAttachments(atts);
-	                            
-	                            File fl = new File("./data/"+ fileName);
-	                            fl.delete();
-	                            
-	                        } else {
-	                            // this part may be the message content
-	                            messageContent = part.getContent().toString();
-	                        }
-	                    }
-	                    //modelMessage.setContent(messageContent.split(">")[1].split("<")[0]);
-	                    //System.out.println(getTextFromMessage(message));
-	                    modelMessage.setContent(getTextFromMessage(message));
-	                    if (attachFiles.length() > 1) {
-	                        attachFiles = attachFiles.substring(0, attachFiles.length() - 2);
-	                    }
-		        	}else{
-		        		modelMessage.setContent(getTextFromMessage(message));
+		        for(Message message: messages) {
+//		        	Message message = messages[i];
+		        	if(!uid.equals(pf.getUID(message).toString())) {
+			        	uid = pf.getUID(message);
+	                    
+			        	rs.ac.uns.ftn.informatika.osa.mailService.entity.Message modelMessage = new rs.ac.uns.ftn.informatika.osa.mailService.entity.Message();
+			        	Address[] a;
+			        	
+	//		        	modelMessage.setContent(getTextFromMessage(message));
+			        	
+			        	String contentType = message.getContentType();
+			        	String messageContent = "";
+			        	
+	//		            CONTENT
+			        	
+			        	String attachFiles = "";
+			        	//primanje att ne radi trenutno, puca
+			        	if(contentType.contains("multipart")) {
+			        		Multipart multiPart = (Multipart) message.getContent();
+		                    int numberOfParts = multiPart.getCount();
+		                    for (int partCount = 0; partCount < numberOfParts; partCount++) {
+		                        MimeBodyPart part = (MimeBodyPart) multiPart.getBodyPart(partCount);
+		                        if (Part.ATTACHMENT.equalsIgnoreCase(part.getDisposition())) {
+		                            // this part is attachment
+		                            String fileName = part.getFileName();
+		                            
+		                            attachFiles += fileName + ", ";
+		                            part.saveFile(uri  + fileName);
+		                            System.out.println(uri  + fileName);
+		                            byte[] bFile = Files.readAllBytes(new File(uri + fileName).toPath());
+		                            String sFile = Base64.encodeBase64String(bFile);
+		                            Attachment att = new Attachment();
+		                            att.setId(att.hashCode());
+		                            att.setName(fileName);
+		                            att.setData(sFile);
+		                            att.setMimeType(".jpg");
+		                            ArrayList<Attachment> atts=new ArrayList<>();
+		                            atts.add(att);
+		                            modelMessage.setMessageAttachments(atts);
+		                            
+//		                            File fl = new File("./data/"+ fileName);
+//		                            fl.delete();
+		                            
+		                        } else {
+		                            // this part may be the message content
+		                            messageContent = part.getContent().toString();
+		                        }
+		                    }
+		                    //modelMessage.setContent(messageContent.split(">")[1].split("<")[0]);
+		                    //System.out.println(getTextFromMessage(message));
+		                    modelMessage.setContent(getTextFromMessage(message));
+		                    if (attachFiles.length() > 1) {
+		                        attachFiles = attachFiles.substring(0, attachFiles.length() - 2);
+		                    }
+			        	}
+			        	else{
+			        		modelMessage.setContent(getTextFromMessage(message));
+			        	}
+			        	
+			        	if((a = message.getFrom()) != null) {
+			        		StringBuilder sb = new StringBuilder();
+			        		for(int j = 0; j < a.length; j++) {
+			        			sb.append(a[j].toString());
+			        		}
+	//	sb? =?UTF-8?Q?Boris_=C5=A0obota?= <sobota365@gmail.com>
+	//	sb? testpmsu@gmail.com
+							if(sb.toString().contains("<")) {
+								modelMessage.setFrom(sb.toString().split("<")[1].split(">")[0]);
+							}else 
+								modelMessage.setFrom(sb.toString());
+			        	}
+			        	
+	//		        	modelMessage.setId(modelMessage.hashCode());
+			        	modelMessage.setSubject(message.getSubject());
+			        	modelMessage.setDateTime(new java.sql.Date(message.getSentDate().getTime()));
+	//		        	modelMessage.setTo(message.getAllRecipients()[0].toString());
+			        	modelMessage.setUnread(true);
+			        	modelMessage.setCc("");
+			        	modelMessage.setBcc("");
+			        	modelMessage.setGmailId(uid);
+			        	modelMessage.setAccount(account);
+			        	
+			        	ArrayList<String> toAddresses = new ArrayList<String>();
+			        	Address[] recipients = message.getRecipients(Message.RecipientType.TO);
+			        	StringBuilder recipientsString = new StringBuilder();
+			        	for (Address address : recipients) {
+			        	    recipientsString.append(address.toString());
+			        	    recipientsString.append(", ");
+			        	}       	
+			        	
+			        	modelMessage.setTo(recipientsString.toString());
+			        	
+			        	userMessages.add(modelMessage);
 		        	}
-		        	
-		        	
-		        	if((a = message.getFrom()) != null) {
-		        		StringBuilder sb = new StringBuilder();
-		        		for(int j = 0; j < a.length; j++) {
-		        			sb.append(a[j].toString());
-		        		}
-//	sb? =?UTF-8?Q?Boris_=C5=A0obota?= <sobota365@gmail.com>
-//	sb? testpmsu@gmail.com
-						if(sb.toString().contains("<")) {
-							modelMessage.setFrom(sb.toString().split("<")[1].split(">")[0]);
-						}else 
-							modelMessage.setFrom(sb.toString());
-		        	}
-		        	
-//		        	modelMessage.setId(modelMessage.hashCode());
-		        	modelMessage.setSubject(message.getSubject());
-		        	modelMessage.setDateTime(new java.sql.Date(message.getSentDate().getTime()));
-//		        	modelMessage.setTo(message.getAllRecipients()[0].toString());
-		        	modelMessage.setUnread(true);
-		        	modelMessage.setCc("");
-		        	modelMessage.setBcc("");
-		        	modelMessage.setGmailId(uid);
-		        	modelMessage.setAccount(account);
-		        	
-		        	ArrayList<String> toAddresses = new ArrayList<String>();
-		        	Address[] recipients = message.getRecipients(Message.RecipientType.TO);
-		        	StringBuilder recipientsString = new StringBuilder();
-		        	for (Address address : recipients) {
-		        	    recipientsString.append(address.toString());
-		        	    recipientsString.append(", ");
-		        	}       	
-		        	
-		        	modelMessage.setTo(recipientsString.toString());
-		        	
-		        	userMessages.add(modelMessage);
 		        	
 		        }    
 		        
 	        }
-	        
 			return userMessages;
 		}catch(Exception e ) {
 			e.printStackTrace();
@@ -220,7 +215,7 @@ public class Mail {
 	     
 	     Session session = Session.getInstance(props, new javax.mail.Authenticator() {
 	            protected PasswordAuthentication getPasswordAuthentication() {
-	                return new PasswordAuthentication(account.getInServerAddress(), account.getPassword());
+	                return new PasswordAuthentication("dopost123@gmail.com", "sfdopost2019");
 	            }
 	        });
 	     

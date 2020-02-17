@@ -27,6 +27,7 @@ import rs.ac.uns.ftn.informatika.osa.mailService.entity.Message;
 import rs.ac.uns.ftn.informatika.osa.mailService.entity.Tag;
 import rs.ac.uns.ftn.informatika.osa.mailService.mailUtils.Mail;
 import rs.ac.uns.ftn.informatika.osa.mailService.service.AccountServiceInterface;
+import rs.ac.uns.ftn.informatika.osa.mailService.service.AttachmentServiceInterface;
 import rs.ac.uns.ftn.informatika.osa.mailService.service.ContactServiceInterface;
 import rs.ac.uns.ftn.informatika.osa.mailService.service.EvenLogServiceInterface;
 import rs.ac.uns.ftn.informatika.osa.mailService.service.FolderServiceInterface;
@@ -48,6 +49,8 @@ public class MessageController {
 	private TagServiceInterface tagService;
 	@Autowired
 	private EvenLogServiceInterface logService;
+	@Autowired
+	private AttachmentServiceInterface attService;
 	
 	public static List<Account> accounts=new ArrayList<>();
 	public static List<Message> messages=new ArrayList<>();
@@ -55,30 +58,51 @@ public class MessageController {
 	
 	@RequestMapping("/getAll")
 	public ArrayList<MessageDTO> getAllMessages(@RequestParam("userId") int id){
+		
 		Mail mailAPI = new Mail();
 		loggedIn=accountService.findOne(2);
 		accounts=accountService.findAll();
-		messages.addAll(messageService.findAll());
 		Folder inbocFolder=null;
 		
 		ArrayList<MessageDTO> ret = new ArrayList<MessageDTO>();
 		List<Message> mess = new ArrayList<Message>();
-
-		List<Message> messTest = messageService.findMessagesForAccount(1);
-		
-		ArrayList<Message> messagesToSaveForAccount= new ArrayList<>();
+//
+//		List<Message> messTest = messageService.findMessagesForAccount(1);
+//		
+//		ArrayList<Message> messagesToSaveForAccount= new ArrayList<>();
 		List<Message> existingMessages= messageService.findAll();
-		List<Message> messages= messageService.findMessagesForAccount(2);
+//		List<Message> messages= messageService.findMessagesForAccount(2);
 		ArrayList<Message> fetchResult=mailAPI.fetch( loggedIn ,false, existingMessages);
+		
 		for(Message m : fetchResult) {
-			System.out.println("fetch result "+ m.getGmailId());
 			if(messageService.findMessageByGmailId(m.getGmailId()) == null) {
+				List<Attachment> atts= m.getMessageAttachments();
+				if(atts != null) {
+					if(atts.size()>0) {
+						m.setMessageAttachments(null);
+						Message messWithId=messageService.save(m);
+						for(Attachment att : atts) {
+							att.setMessageAttachment(messWithId);
+							attService.save(att);
+						}
+						m.setMessageAttachments(atts);
+						messageService.save(m);
+					}
+				}
+				System.out.println("save mess");
 				messageService.save(m);
 			}
 		}
-			
-		for(Message m : messages) {
-			ret.add(new MessageDTO(m));
+		
+		List<Message> messagesFromDB=messageService.findAll();
+		for(Message m : messagesFromDB) {
+			if(m.getMessageAttachments() != null) {
+				if(m.getMessageAttachments().size()>0) {
+					ret.add(new MessageDTO(m, m.getMessageAttachments()));
+				}
+			}else {
+				ret.add(new MessageDTO(m));
+			}
 		}
 		
 		return ret;

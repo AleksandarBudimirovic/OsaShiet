@@ -75,6 +75,7 @@ public class Message implements Serializable, Comparable<Message>{
 	@OneToMany(cascade={ALL}, fetch=LAZY, mappedBy="messageTag")
 	private List<Tag> messageTag;
 	
+	@JsonIgnore
 	@OneToMany(cascade={ALL}, fetch=LAZY, mappedBy="messageAttachment")
 	private List<Attachment> messageAttachments;
 	
@@ -235,7 +236,7 @@ public class Message implements Serializable, Comparable<Message>{
 		return "Message [id=" + id + ", from=" + from + ", to=" + to + ", cc=" + cc + ", bcc=" + bcc + ", dateTime="
 				+ dateTime + ", subject=" + subject + ", content=" + content + ", gmailId=" + gmailId + ", unread="
 				+ unread + ", draft=" + draft + ", account=" + account.getId() + ", folderMessage=" + folderMessage
-				+ ", messageTag=" + messageTag + ", messageAttachments=" + messageAttachments + "]";
+				+ ", messageTag=" + messageTag + ", messageAttachments=" + messageAttachments.get(0).getId() + "]";
 	}
 	@Override
 	public int compareTo(Message other) {

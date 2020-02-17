@@ -14,6 +14,8 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import rs.ac.uns.ftn.informatika.osa.mailService.dto.AttachmentDTO;
 
 @Entity                
